@@ -24,6 +24,7 @@ static void die(const char msg[]){
 	exit(EXIT_FAILURE);
 }
 
+// Funktions- / Strukturdekleration, globale Varialen ect
 static void bbPut(int value);
 static int bbGet();
 static int doWork(FILE *rx, FILE *tx);
@@ -37,7 +38,13 @@ typedef struct name{
 	char nachname[MAX_NAME + 1];
 }name;
 
+　
+　
+　
+//Funktion main()
 int main(int argc, char **argv){
+
+//Argumente prüfen, Initialsierungen, ect
 	if(argc != 2)
 		die("usage");
 	errno = 0;
@@ -55,12 +62,16 @@ int main(int argc, char **argv){
 	sigemptyset(&act.sa_mask);
 	if(-1 == sigaction(SIGPIPE, &act, NULL))
 		die("sigaction");
+		
+//Threads starten
 	pthread_t tid;
 	for(int i = 0; i < threads; i++){
 		errno = pthread_create(&tid, NULL, threadHandler, (void *)NULL);
 		if(errno)
 			die("pthread_create");
 	}
+	
+// Socket erstellen und für Verbindungsannehme vorbereiten 
 	int listensock = socket(AF_INET6, SOCK_STREAM, 0);
 	if(-1 == listensock)
 		die("socket");
@@ -73,6 +84,7 @@ int main(int argc, char **argv){
 		die("bind");
 	if(-1 == listen(listensock, SOMAXCONN))
 		die("listen");
+//Verbindung annehmen und in den Buffer legen
 	for(;;){
 		int clientsock = accept(listensock, NULL, NULL);
 		if(-1 == clientsock)
@@ -81,6 +93,7 @@ int main(int argc, char **argv){
 	}
 }
 
+//Funktion bbPut()
 static void bbPut(int value){
 	P(full);
 	data[write] = value;
@@ -88,6 +101,7 @@ static void bbPut(int value){
 	V(free);
 }
 
+//Funktion bbGet()
 static int bbGet(){
 	P(free);
 	P(readL);
@@ -98,6 +112,7 @@ static int bbGet(){
 	return erg;
 }
 
+//Funktion threadHandler
 static void *threadHandler(void *arg){
 	while(42){
 		int cliet = bbGet();
@@ -126,6 +141,7 @@ static void *threadHandler(void *arg){
 	}
 }
 
+//Funktion doWork
 static int doWork(FILE *rx, FILE *tx){
 	name *n = malloc(sizeof(name));
 	if(!n)
@@ -133,6 +149,7 @@ static int doWork(FILE *rx, FILE *tx){
 	char buffer[MAX_LINE + 1];
 	int counter = 0; 
 	int err = 0;
+//Zeilen vom Client einlesen, Array aufbauen
 	while(fgets(buffer, sizeof(buffer), rx)){
 		if(!strchr(buffer, '\n'))
 			continue;
@@ -153,6 +170,7 @@ static int doWork(FILE *rx, FILE *tx){
 			free(n);
 			return -1;
 		}
+//Eingelesene Daten sortieren und an den CLienten senden
 		qsort(n, counter, sizeof(name), namecmp);
 		for(int i = 0; i < counter ; i++)
 			fprintf(tx, "%s, %s\n", n[i].vorname, n[i].nachname);
@@ -161,6 +179,7 @@ static int doWork(FILE *rx, FILE *tx){
 	}
 }
 
+//Funktion namecmp
 static int namecmp(const void *p1, const void *p2){
 	name *n1 = (name *) p1;
 	name *n2 = (name *) p2;
