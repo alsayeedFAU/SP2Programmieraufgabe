@@ -150,6 +150,9 @@ static int doWork(FILE *rx, FILE *tx){
 	int counter = 0; 
 	int err = 0;
 //Zeilen vom Client einlesen, Array aufbauen
+// char * strchr ( const char *, int );  Locate last occurrence of character in string 
+// char *strtok(char *str, const char *delim); extracts token from string
+
 	while(fgets(buffer, sizeof(buffer), rx)){
 		if(!strchr(buffer, '\n'))
 			continue;
