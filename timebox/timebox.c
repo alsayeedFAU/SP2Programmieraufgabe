@@ -26,6 +26,7 @@ static void die (const char *msg){
 	exit(EXIT_FAILURE);
 }
 
+// Funktionsdeklarationen, globale Variablen
 static void parse_config(void);
 static void *threadHandle(void *arg);
 static void handleCommand(FILE *rx, FILE *tx);
@@ -37,21 +38,28 @@ static int threadc = 0;
 static sigset_t set;
 static void handler(int s);
 
+
+// Funktion main()
 int main(int argc, char **argv){
 	if(chdir(BASEDIR))
 		die("chdir");
+	
 	struct sigaction act = {
 		.sa_handler = SIG_IGN
 	};
 	sigemptyset(&act.sa_mask);
 	if(-1 == sigaction(SIGPIPE, &act, NULL))
 		die("sigaction");
+	
+	
 	full = semCreate(BUFFERSIZE);
 	readL = semCreate(1);
 	free = semCreate(0);
+	
 	sigemptyset(&set);
 	sigaddset(&set, SIGUSR1);
 	pthread_sigmask(SIG_BLOCK, &set, NULL);
+	
 	parse_config();
 	struct sigaction a = {
 		.sa_handler = handler,
@@ -60,6 +68,8 @@ int main(int argc, char **argv){
 	sigemptyseet(&a.sa_mask);
 	if(-1 == sigaction(SIGUSR1, &a, NULL))
 		die("sigaction");
+	
+// Socket erstellen und auf Verbindungsannahme vorbereiten
 	int listensock = socket(AF_INET6, SOCK_STREAM, 0);
 	if(-1 == listensock)
 		die("socket");
@@ -72,6 +82,7 @@ int main(int argc, char **argv){
 		die("bind");
 	if(-1 == listen(listensock, SOMAXCONN))
 		die("listen");
+// Verbindungen annehmen und bearbeiten
 	for(;;){
 		int clientsock = accept(listensock, NULL, NULL);
 		if( -1 == clientsock)
@@ -82,16 +93,18 @@ int main(int argc, char **argv){
 	}
 }
 
+// Signalbehandlung für SIGUSR1
 static void handler(int s){
 	int err = errno;
 	parse_config();
 	errno = err;
 }
 
+// Funktion parse_config()
 static void parse_config(void){
 	int t = DEFAULT_THREADS;
-	FILE *f = fopen(CONFIG, "r");
-	if(f){
+	FILE *f = fopen(CONFIG, "r"); //Config einlesen 
+	if(f){ // Trheadanzahl auslesen
 		char buffer2[MAX_LINE_LEN];
 		if(fgets(buffer2, sizeof(buffer2), f))
 			fscanf(f, "%d", &t);
@@ -99,22 +112,23 @@ static void parse_config(void){
 	if(t <= 0)
 		t = DEFAULT_THREADS;
 	pthread_t tid;
-	for(int i = threadc; i < t; i++){
+	for(int i = threadc; i < t; i++){ // Neue Threads erstellen
 		pthread_create(&tid, NULL, thread_handler, (void *)NULL);
 		pthread_detach(&tid);
 	}
-	for(int i = t; i < threadc; i++)
+	for(int i = t; i < threadc; i++) // Überzählige Threads killen
 		bbPut(DEAD_PILL);
 	threadc = t;
 	if(f)
 		fclose(f);
 }
 
+// Funktion thread_handler()
 static void *thread_handler(void *arg){
 	while(42){
 		int client = bbGet();
 		if(client == DEAD_PILL)
-			pthread_exit(0);
+			pthread_exit(0); // beendet Thread
 		int d = dup(client);
 		if(!d){
 			close(client);
@@ -138,6 +152,7 @@ static void *thread_handler(void *arg){
 	}
 }
 
+// Funktion handleCommand()
 static void handleCommand(FILE *rx, FILE *tx){
 	char buffer2[MAX_LINE_LEN +1];
 	if(!fgets(buffer2, sizeof(buffer2), rx)){
@@ -159,6 +174,7 @@ static void handleCommand(FILE *rx, FILE *tx){
 	fprintf(tx, "%ld\n", s.st_mtime);
 }
 
+// Funktion bbPut()
 static void bbPut(int value){
 	P(full);
 	buffer[write] = value;
@@ -166,6 +182,7 @@ static void bbPut(int value){
 	V(free);
 }
 
+// Funktion bbGet()
 static int bbGet(){
 	P(free);
 	P(readL);
