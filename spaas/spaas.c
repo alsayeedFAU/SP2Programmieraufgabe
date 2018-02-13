@@ -95,39 +95,39 @@ int main(int argc, char **argv){
 
 //Funktion bbPut()
 static void bbPut(int value){
-	P(full);
-	data[write] = value;
-	write = (write + 1)%BUFFERSIZE;
-	V(free);
+	P(full);  //plockieren
+	data[write] = value; //einfügen
+	write = (write + 1)%BUFFERSIZE; //pointer auf zuletzt eingefügte
+	V(free); //vreigeben
 }
 
 //Funktion bbGet()
 static int bbGet(){
-	P(free);
-	P(readL);
+	P(free); 
+	P(readL); 
 	int erg = data[read];
 	read = (read +1)%BUFFERSIZE;
-	V(full);
-	V(readL);
+	V(full); 
+	V(readL); 
 	return erg;
 }
 
 //Funktion threadHandler
 static void *threadHandler(void *arg){
 	while(42){
-		int cliet = bbGet();
-		int d = dup(client);
+		int client = bbGet();
+		int d = dup(client); //duplizieren
 		if(d == -1){
 			close(client);
 			continue;
 		}
-		FILE *rx = fdopen(client, "r");
+		FILE *rx = fdopen(client, "r"); // r == read
 		if(!rx){
 			close(client);
 			close(d);
 			continue;
 		}
-		FILE *tx = fdopen(d, "w");
+		FILE *tx = fdopen(d, "w"); // w == write
 		if(!tx){
 			fclose(rx);
 			close(d);
@@ -154,18 +154,18 @@ static int doWork(FILE *rx, FILE *tx){
 // char *strtok(char *str, const char *delim); extracts token from string
 
 	while(fgets(buffer, sizeof(buffer), rx)){
-		if(!strchr(buffer, '\n'))
+		if(!strchr(buffer, '\n')) //Prüft Zeile
 			continue;
 		char *save;
-		char *vor = strtok_r(buffer, "\t", &save);
-		if(strlen(vor) > MAX_NAME)
+		char *vor = strtok_r(buffer, "\t", &save); //trennt buffer nach "\t"
+		if(strlen(vor) > MAX_NAME) //prüft Vorname
 			continue;
 		strcpy(n[counter].vorname, vor);
-		vor = strtok_r(NULL, "\n", &save);
-		if(strchr(vor, ' ') || strchr(vor, '\t') || strlen(vor) > MAX_NAME)
+		vor = strtok_r(NULL, "\n", &save); // nimmt den Rest (Nachname)
+		if(strchr(vor, ' ') || strchr(vor, '\t') || strlen(vor) > MAX_NAME) //prüft Nachname
 			continue;
 		strcpy(n[counter].nachname, vor);
-		if(!realloc(n, ((++counter) + 1) * sizeof(name))){
+		if(!realloc(n, ((++counter) + 1) * sizeof(name))){ //erweitert Buffer 
 			err = 1;
 			break;
 		}
@@ -183,7 +183,7 @@ static int doWork(FILE *rx, FILE *tx){
 }
 
 //Funktion namecmp
-static int namecmp(const void *p1, const void *p2){
+static int namecmp(const void *p1, const void *p2){ //Spicker
 	name *n1 = (name *) p1;
 	name *n2 = (name *) p2;
 	int a = strcmp(n1->nachname, n2->nachname);
