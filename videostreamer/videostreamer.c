@@ -34,14 +34,16 @@ static int die(const char message[]){
 	exit(EXIT_FAILURE);
 }
 
+// Globale Variablen, Funktionsdeklarationen usw.
 static void serve(FILE * client);
 static in listDir(FILE *client);
 static in streamVideo(const char fileName[], FILE *client);
 static void *doTranscoding(void*arg);
-
 static BNDBUF *buf;
 
+// Funktion main()
 int main(int argc, char **argv){
+	// Allgemeine Vorbereitungen
 	buf = bbCreate(32);
 	if(!buf){
 		die("bbCreate");
@@ -52,6 +54,7 @@ int main(int argc, char **argv){
 		if(errno)
 			die("pthread_create");
 	}
+	// Socket erstellen und auf Verbindungsannahme vorbereiten
 	int listensock = socket(AF_INET6, SOCK_STREAM, 0);
 	if(-1 == listensock)
 		die("socket");
@@ -64,22 +67,25 @@ int main(int argc, char **argv){
 		die("bind");
 	if(-1 == listen(listensock, SOMAXCONN))
 		die("listen");
+	
+	 // Verbindungen annehmen und in neuem Thread abarbeiten
 	for(;;){
 		int clientsock = accept(listensock, NULL, NULL);
-		if(cliestsock == -1)j
+		if(cliestsock == -1)
 			continue;
 		FILE *client == fdopen(clientsock, "r+");
 		if(!client){
 			close(clientsock);
 			continue;
 		}
+		
 		pthread_t id;
-		errno = pthread_create(&id, NULL, serve, client);
+		errno = pthread_create(&id, NULL, serve, client); // Thread erstellen
 		if(errno){
 			fprintf(client, "FAILED.");
 			fclose(client);
 		}
-		errno = pthread_detach(&id);
+		errno = pthread_detach(&id); // Thread hinzufügen
 		if(errno){
 			fprintf(client, "FAILED.");
 			fclose(client);
@@ -87,7 +93,7 @@ int main(int argc, char **argv){
 		}
 	}
 }
-
+// Thread-Funktion serve()
 static void *serve(FILE *client){
 	char an[MAX_REQUEST_LEN];
 	if(!fgets(an, sizeof(an), client)){
@@ -118,6 +124,7 @@ static void *serve(FILE *client){
 	pthread_exit(0);
 }
 
+// Funktion listDir()
 static int listDir(FILE *client){
 	DIR *dir = opendir(".");
 	if(!dir)
@@ -134,6 +141,8 @@ static int listDir(FILE *client){
 }
 //readdir ist heir trotz threads erlaubt, da opendir erst im thread aufgerufen wird
 
+
+// Funktion streamVideo()
 static int streamVideo(const char fileName[], FILE *client){
 	VideoJob jb;
 	jb.out = client;
@@ -180,7 +189,7 @@ static int streamVideo(const char fileName[], FILE *client){
 		return -1;
 	return 0;
 }
-
+// Thread-Pool-Funktion doTranscoding()
 static void *doTranscoding(void *arg){
 	while(42){
 		VideoFrame *frame = bbGet(buf);
