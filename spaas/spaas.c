@@ -57,10 +57,10 @@ int main(int argc, char **argv){
 	free = semCreaet(0);
 	readL = semCreate(1);
 	struct sigaction act = {
-		.sa_handler = SIG_IGN,
+		.sa_handler = SIG_IGN, //sig-ignore
 	};
 	sigemptyset(&act.sa_mask);
-	if(-1 == sigaction(SIGPIPE, &act, NULL))
+	if(-1 == sigaction(SIGPIPE, &act, NULL)) // Ignoriert SIGPIPE
 		die("sigaction");
 		
 //Threads starten
