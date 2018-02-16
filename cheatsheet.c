@@ -1,5 +1,4 @@
 //SIGNALBEHANDLUNG
-
 static sigset_t block;
 struct sigaction action = {
     .sa_handler = sighandler | SIG_IGN | SIG_DFL,
@@ -16,8 +15,8 @@ if (sigaction(SIGCHLD, &action, NULL) == -1) die("action");
 sigemptyset(&block);
 sigaddset(&block,SIGCHLD);
 
-//SERVER: SOCKET ERSTELLEN, VERBINDUNGSANNAHME VORBEREITEN UND VERBINDUNGSANNAHME
 
+//SERVER: SOCKET ERSTELLEN, VERBINDUNGSANNAHME VORBEREITEN UND VERBINDUNGSANNAHME
 int listenSock = socket(AF_INET6, SOCK_STREAM, 0);
 if(listenSock==-1) { die("socket"); }
 struct sockaddr_in6 name = {
@@ -39,8 +38,8 @@ for (;;) {
     close(clientSock);
 }
 
-// FUNKTION ZUR ERSTELLUNG EINES ZWEI-ELEMENTIGEN FILE*-ARRAYS ZUM LESEN UND SCHREIBEN
 
+// FUNKTION ZUR ERSTELLUNG EINES ZWEI-ELEMENTIGEN FILE*-ARRAYS ZUM LESEN UND SCHREIBEN
 static FILE** sock2fds(int sock) {
     FILE *rx = fdopen(sock, "r"); if (!rx) {
         close(sock);
@@ -60,8 +59,8 @@ static FILE** sock2fds(int sock) {
     return farray;
 }
 
-//CLIENT: DNS-ANFRAGE (werden wir wohl nicht brauchen)
 
+//CLIENT: DNS-ANFRAGE (werden wir wohl nicht brauchen)
 char *host, *port;
 struct addrinfo hints = {
      .ai_socktype = SOCK_STREAM,
@@ -90,8 +89,8 @@ if (curr == NULL) {
     exit(EXIT_FAILURE);
 }
 
-// SEMAPHOR
 
+// SEMAPHOR
 #include<errno.h>
 #include<pthread.h>
 #include<stdlib.h>
@@ -141,8 +140,8 @@ void V(SEM*sem){
     pthread_mutex_unlock(&sem->m);
 }
 
-//JBUFFER
 
+//JBUFFER
 #include "bbuffer.h"
 #include "sem.h"
 #include <stdlib.h>
